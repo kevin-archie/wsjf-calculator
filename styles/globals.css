@@ -1,0 +1,91 @@
+:root {
+  --main-background-gradient: #f2f2f2;
+  --blue-background-gradient: linear-gradient(to right bottom, #0f4489, #0f4489, #0f458a, #0f458a, #0f458a);
+  --green-background-gradient: linear-gradient(to right, #37be89, #32b481, #2ea979, #299f71, #249569);
+  --red-background-gradient: linear-gradient(to right, #c32e30, #bf3133, #bb3335, #b73638, #b3383a);
+  --yellow-background-gradient: linear-gradient(to right, #f9b31c, #f8af1b, #f6ac1a, #f5a81a, #f3a519);
+  --spacing-xs: 5px;
+  --spacing-s: 10px;
+  --spacing-md: 20px;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  background-image: var(--main-background-gradient);
+  color: #222222;
+}
+
+a {
+  color: #0f458a;
+  text-decoration: none;
+}
+
+h2 {
+  color: white;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.flexbox--space-between {
+  justify-content: space-between !important;
+}
+
+.flexbox--space-around {
+  justify-content: space-around !important;
+}
+
+.blue-background {
+  background-image: var(--blue-background-gradient);
+}
+
+.green-background {
+  background-image: var(--green-background-gradient);
+}
+
+.red-background {
+  background-image: var(--red-background-gradient);
+}
+
+.yellow-background {
+  background-image: var(--yellow-background-gradient);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.centered-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  flex-direction: column;
+  margin-top: 40px;
+}
+
+.add-task-button {
+  background-color: rgb(255 211 0);
+}
+
+.add-task-button:hover {
+  background-color: rgba(255, 211, 0, 0.7) !important; /* Add !important */
+}
+
+.center-button {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-md);
+}
+
+.table-container,
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

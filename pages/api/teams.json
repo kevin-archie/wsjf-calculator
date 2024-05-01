@@ -1,0 +1,6 @@
+[
+    { "name": "schizo-cats", "teamName": "Schizo Cats", "teamDescription": "Crazy cats from the kitty planet.", "teamImagePath": "/cats-logo.png", "teamPlanetPath": "/planet-skizo.png", "teamCounter": 25, "teamPosition": "3rd" },
+    { "name": "ducks-invaders", "teamName": "Duck Invaders", "teamDescription": "Ducks space invaders from Duck planet.", "teamImagePath": "/ducks-logo.png", "teamPlanetPath": "/planet-ducks.png", "teamCounter": 20, "teamPosition": "2nd" },
+    { "name": "donuts-factory", "teamName": "Donut Factory", "teamDescription": "Pandas who made some donuts from the Donuts planet.", "teamImagePath": "/pandas-logo.png", "teamPlanetPath": "/planet-pandas.png", "teamCounter": 25, "teamPosition": "4th" },
+    { "name": "asgard-racoons", "teamName": "Raccoons of Asgard", "teamDescription": "Racoons guardian of the galaxy from the great Asgard planet.", "teamImagePath": "/racoon-logo.png", "teamPlanetPath": "/planet-racoon.png", "teamCounter": 20, "teamPosition": "1st" }
+]

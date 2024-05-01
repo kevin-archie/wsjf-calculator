@@ -1,0 +1,10 @@
+.page-card {
+    width: 50%;
+    height: 500px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    border-radius: 10px;
+}

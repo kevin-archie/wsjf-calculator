@@ -1,0 +1,25 @@
+.container {
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.team-card__logo {
+    width: 200px;
+    height: 200px;
+}
+
+.section--align-center {
+    text-align: center;
+}
+
+.section__size {
+    color: #fdca00;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.section__position {
+    color: #0f458a;
+    font-size: 24px;
+    font-weight: 800;
+}

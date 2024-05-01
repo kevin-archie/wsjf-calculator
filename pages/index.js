@@ -1,0 +1,259 @@
+import React, {useState} from "react";
+import {Button, Input, Table, Typography, Space, InputNumber} from "antd";
+import {PlusOutlined, MinusOutlined, DeleteOutlined} from "@ant-design/icons";
+import {v4 as uuidv4} from "uuid";
+import {faker} from '@faker-js/faker';
+
+const {Title} = Typography;
+
+export default function Home() {
+    const [task, setTask] = useState([
+        {
+            id: uuidv4(),
+            issueKey: faker.number.int({min: 10, max: 999}),
+            businessValue: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            timeCriticality: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            riskOpportunity: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            jobDuration: faker.helpers.arrayElement([1, 2, 3, 5, 8, 13, 20, 40])
+        },
+        {
+            id: uuidv4(),
+            issueKey: faker.number.int({min: 10, max: 999}),
+            businessValue: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            timeCriticality: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            riskOpportunity: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            jobDuration: faker.helpers.arrayElement([1, 2, 3, 5, 8, 13, 20, 40])
+        },
+        {
+            id: uuidv4(),
+            issueKey: faker.number.int({min: 10, max: 999}),
+            businessValue: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            timeCriticality: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            riskOpportunity: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
+            jobDuration: faker.helpers.arrayElement([1, 2, 3, 5, 8, 13, 20, 40])
+        },
+    ]);
+
+    const addTask = () => {
+        setTask((prevTask) => [
+            ...prevTask,
+            {id: uuidv4(), issueKey: '', businessValue: null, riskOpportunity: null, jobDuration: null},
+        ]);
+    };
+
+    const removeTask = (id) => {
+        setTask((prevTask) =>
+            prevTask.filter((task) => task.id !== id)
+        );
+    };
+
+    const handleValueChange = (newValue, id, field) => {
+        const allowedValues = [0, 1, 2, 3, 5, 8, 13, 20, 40];
+        let value;
+        if (field === 'jobDuration') {
+            value = newValue !== '' ? newValue : 1;
+        } else {
+            value = allowedValues.includes(Number(newValue)) ? newValue : 0;
+        }
+        setTask((prevTask) =>
+            prevTask.map((task) =>
+                task.id === id ? {...task, [field]: value} : task
+            )
+        );
+    };
+
+    const incrementValue = (currentValue, id, field) => {
+        const allowedValues = [0, 1, 2, 3, 5, 8, 13, 20, 40];
+        const currentIndex = allowedValues.indexOf(Number(currentValue));
+        if (currentIndex < allowedValues.length - 1) {
+            handleValueChange(allowedValues[currentIndex + 1], id, field);
+        }
+    };
+
+    const decrementValue = (currentValue, id, field) => {
+        const allowedValues = [0, 1, 2, 3, 5, 8, 13, 20, 40];
+        const currentIndex = allowedValues.indexOf(Number(currentValue));
+        if (currentIndex > 0) {
+            handleValueChange(allowedValues[currentIndex - 1], id, field);
+        }
+    };
+
+    const columns = [
+        {
+            title: 'Issue Key',
+            dataIndex: 'issueKey',
+            key: 'issueKey',
+            align: 'center',
+            width: 200, // This sets the width of the column to 50% of the table's width
+            render: (text, record) => (
+                <Input
+                    value={text}
+                    onChange={(e) => handleValueChange(e.target.value, record.id, 'issueKey')}
+                />
+            ),
+        },
+        {
+            title: 'Business Value',
+            dataIndex: 'businessValue',
+            key: 'businessValue',
+            align: 'center',
+            render: (text, record) => (
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <Button
+                        icon={<MinusOutlined/>}
+                        onClick={() => decrementValue(text, record.id, 'businessValue')}
+                        size="small"
+                        style={{border: 'none', marginRight: '5px'}}
+                    />
+                    <Input
+                        value={text}
+                        onChange={(e) => handleValueChange(e.target.value, record.id, 'businessValue')}
+                        style={{width: '60px', textAlign: 'center'}}
+                    />
+                    <Button
+                        icon={<PlusOutlined/>}
+                        onClick={() => incrementValue(text, record.id, 'businessValue')}
+                        size="small"
+                        style={{border: 'none', marginLeft: '5px'}}
+                    />
+                </div>
+            ),
+        },
+        {
+            title: 'Time Criticality',
+            dataIndex: 'timeCriticality',
+            key: 'timeCriticality',
+            align: 'center',
+            render: (text, record) => (
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <Button
+                        icon={<MinusOutlined/>}
+                        onClick={() => decrementValue(text, record.id, 'timeCriticality')}
+                        size="small"
+                        style={{border: 'none', marginRight: '5px'}}
+                    />
+                    <Input
+                        value={text}
+                        onChange={(e) => handleValueChange(e.target.value, record.id, 'timeCriticality')}
+                        style={{width: '60px', textAlign: 'center'}}
+                    />
+                    <Button
+                        icon={<PlusOutlined/>}
+                        onClick={() => incrementValue(text, record.id, 'timeCriticality')}
+                        size="small"
+                        style={{border: 'none', marginLeft: '5px'}}
+                    />
+                </div>
+            ),
+        },
+        {
+            title: 'Risk/Opportunity',
+            dataIndex: 'riskOpportunity',
+            key: 'riskOpportunity',
+            align: 'center',
+            render: (text, record) => (
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <Button
+                        icon={<MinusOutlined/>}
+                        onClick={() => decrementValue(text, record.id, 'riskOpportunity')}
+                        size="small"
+                        style={{border: 'none', marginRight: '5px'}}
+                    />
+                    <Input
+                        value={text}
+                        onChange={(e) => handleValueChange(e.target.value, record.id, 'riskOpportunity')}
+                        style={{width: '60px', textAlign: 'center'}}
+                    />
+                    <Button
+                        icon={<PlusOutlined/>}
+                        onClick={() => incrementValue(text, record.id, 'riskOpportunity')}
+                        size="small"
+                        style={{border: 'none', marginLeft: '5px'}}
+                    />
+                </div>
+            ),
+        },
+        {
+            title: 'Job Duration',
+            dataIndex: 'jobDuration',
+            key: 'jobDuration',
+            align: 'center',
+            render: (text, record) => (
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <Button
+                        icon={<MinusOutlined/>}
+                        onClick={() => decrementValue(text, record.id, 'jobDuration')}
+                        size="small"
+                        style={{border: 'none', marginRight: '5px'}}
+                    />
+                    <Input
+                        value={text}
+                        onChange={(e) => handleValueChange(e.target.value, record.id, 'jobDuration')}
+                        style={{width: '60px', textAlign: 'center'}}
+                    />
+                    <Button
+                        icon={<PlusOutlined/>}
+                        onClick={() => incrementValue(text, record.id, 'jobDuration')}
+                        size="small"
+                        style={{border: 'none', marginLeft: '5px'}}
+                    />
+                </div>
+            ),
+        },
+        {
+            title: 'WSJF',
+            dataIndex: 'wsjfScore',
+            key: 'wsjfScore',
+            align: 'center',
+            render: (text) => (
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <Typography.Text
+                        style={{
+                            width: '60px',
+                            textAlign: 'center',
+                            color: text ? '#07A6F6' : 'red',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {text || '--'}
+                    </Typography.Text>
+                </div>
+            ),
+        },
+        {
+            title: 'Action',
+            key: 'action',
+            render: (text, record) => (
+                <Button
+                    type="link"
+                    danger
+                    icon={<DeleteOutlined/>}
+                    onClick={() => removeTask(record.id)}
+                />
+            ),
+        }
+    ];
+
+    return (
+        <div className="centered-content">
+            <img src="https://icons.iconarchive.com/icons/graphicloads/flat-finance/256/calculator-icon.png"
+                 style={{width: '48px', height: '48px'}} alt="App Logo"/>
+            <Title level={1}>WSJF Calculator</Title>
+            <div className="table-container">
+                <Table columns={columns} dataSource={task} rowKey="id" pagination={false}/>
+            </div>
+            <div className="button-container">
+                <div className="center-button">
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined/>}
+                        onClick={addTask}
+                        className="add-task-button"
+                    >
+                        Add Task
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}

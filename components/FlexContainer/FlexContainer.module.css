@@ -1,0 +1,17 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container > * {
+    margin-right: var(--spacing-md);
+}
+
+.container--horizontal {
+    flex-direction: row;
+}
+
+.container--vertical {
+    flex-direction: column;
+}
