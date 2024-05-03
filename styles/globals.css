@@ -83,9 +83,72 @@ h2 {
   margin-top: var(--spacing-md);
 }
 
-.table-container,
+.table-container {
+  margin-top: var(--spacing-md);
+}
+
 .button-container {
+  margin-top: var(--spacing-md);
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.modal-title {
+  font-size: 2.5em; /* Adjust as needed */
+  text-align: center;
+  color: #2F4F4F; /* Darker shade of Hunter Green */
+}
+
+.modal-subtitle {
+  font-size: 1.5em; /* Adjust as needed */
+  text-align: center;
+  width: 40%; /* Adjust as needed */
+  margin: auto; /* Center the text block */
+  white-space: normal; /* Allow the text to wrap */
+  color: #4C7E5B; /* Lighter shade of Hunter Green */
+}
+
+.modal-payment-subtitle {
+  font-size: 1.5em; /* Adjust as needed */
+  text-align: center;
+  width: 40%; /* Adjust as needed */
+  margin: auto; /* Center the text block */
+  white-space: normal; /* Allow the text to wrap */
+  color: #4C7E5B; /* Lighter shade of Hunter Green */
+}
+
+.start-free-trial-button {
+  font-size: 1.2em; /* Adjust as needed */
+  background-color: #355E3B; /* Hunter Green */
+  color: white; /* Text color */
+  width: 40%; /* Normal width */
+  text-align: center; /* Center the text */
+  padding: 10px; /* Padding around the text */
+  margin-top: 40px; /* Space above the button */
+  display: inline-block; /* Make it an inline block element */
+}
+
+.login-link {
+  color: #355E3B; /* Hunter Green */
+  text-decoration: underline; /* Underline the text */
+  text-align: center; /* Center the text */
+  display: block; /* Make it a block element */
+  margin-top: 10px; /* Space above the link */
+}
+
+.custom-modal .ant-modal .ant-modal-content {
+  height: 85%; /* Adjust as needed */
+  overflow-y: auto; /* Add a scrollbar if the content exceeds the height */
+}
+
+.custom-modal .ant-modal .ant-modal-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column; /* Use this if you have multiple items and you want them to stack vertically */
 }
