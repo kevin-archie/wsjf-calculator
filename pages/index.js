@@ -1,20 +1,25 @@
 import React, {useState, useEffect, useRef} from "react";
 import {Button, Input, Table, Typography, Tooltip, Modal, Form, Row, Col, Select} from "antd";
-import {PlusOutlined, MinusOutlined, DeleteOutlined} from "@ant-design/icons";
+import {PlusOutlined, MinusOutlined, DeleteOutlined, ReloadOutlined} from "@ant-design/icons";
 import {v4 as uuidv4} from "uuid";
 import {faker} from '@faker-js/faker';
 import post from "./api/calculator";
+import jiraClient from "./api/jira";
 import calculateInitiateTasks from "./api/calculateInitiateTasks";
 import Footer from './footer';
+import Epic16Icon from '@atlaskit/icon-object/glyph/epic/16'
+import Story16Icon from '@atlaskit/icon-object/glyph/story/16'
 
-const {Title} = Typography;
-const { Option } = Select;
+const {Text, Title} = Typography;
+
+const {Option} = Select;
 
 export async function getServerSideProps() {
     const initialTasks = [
         {
             id: uuidv4(),
             issue_key: faker.number.int({min: 10, max: 999}),
+            issue_summary: '[FE][Mobile] User Module',
             business_value: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
             time_criticality: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
             risk_opportunity: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
@@ -23,6 +28,7 @@ export async function getServerSideProps() {
         {
             id: uuidv4(),
             issue_key: faker.number.int({min: 10, max: 999}),
+            issue_summary: '[BE][API] new API for User Registration',
             business_value: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
             time_criticality: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
             risk_opportunity: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
@@ -31,6 +37,7 @@ export async function getServerSideProps() {
         {
             id: uuidv4(),
             issue_key: faker.number.int({min: 10, max: 999}),
+            issue_summary: '[FE][WEB] User Management Module',
             business_value: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
             time_criticality: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
             risk_opportunity: faker.helpers.arrayElement([0, 1, 2, 3, 5, 8, 13, 20, 40]),
@@ -40,16 +47,25 @@ export async function getServerSideProps() {
 
     const tasksWithWSJF = await Promise.all(initialTasks.map(calculateInitiateTasks));
 
-    return { props: { initialTasks: tasksWithWSJF } };
+    return {props: {initialTasks: tasksWithWSJF}};
 }
 
 export default function Home({initialTasks}) {
     const [form] = Form.useForm();
+    const [isAddTaskEnabled, setIsAddTaskEnabled] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [isDateValid, setIsDateValid] = useState(true);
+    const [isSubmitParentEnabled, setIsSubmitParentEnabled] = useState(false);
+    const [isLoadingFetchingChildren, setIsLoadingFetchingChildren] = useState(false);
+    const [isLoadingGenerateSubtasks, setIsLoadingGenerateSubtasks] = useState(false);
+    const [parentDetail, setParentDetail] = useState(null);
+    const [childrenTasks, setChildrenTasks] = useState(null);
+    const [abortFetchingChildrenController, setAbortFetchingChildrenController] = useState(null);
+    const [isIssueKeyParentNotFound, setIsIssueKeyParentNotFound] = useState(false);
+    const [isCheckingParentIsError, setIsCheckingParentIsError] = useState(false);
 
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -62,20 +78,69 @@ export default function Home({initialTasks}) {
     const [displayedRows, setDisplayedRows] = useState(10);
     const [isPaywallVisible, setIsPaywallVisible] = useState(false);
 
-    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isModalFetchChildrenVisible, setIsModalFetchChildrenVisible] = useState(false);
     const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
     const [cardNumber, setCardNumber] = useState('');
 
     const showModal = () => {
-        setIsModalVisible(true);
+        setIsModalFetchChildrenVisible(true);
     };
 
-    const handleOk = () => {
-        setIsModalVisible(false);
+    const mappedChildrenTasks = childrenTasks?.map((task) => ({
+        id: uuidv4(),
+        issue_key: task.key,
+        issue_summary: task.fields.summary,
+        business_value: null,
+        time_criticality: null,
+        risk_opportunity: null,
+        job_duration: null,
+    }));
+
+    const handleOk = async () => {
+        const issueKey = form.getFieldValue('parentIssueKey');
+
+        console.log("Fetching Childrens of: ", issueKey)
+
+        setIsModalFetchChildrenVisible(false);
+        setIsLoadingGenerateSubtasks(true);
+
+        try {
+            const response = await jiraClient.getChildren(issueKey);
+            if (response?.status === 200) {
+                const result = response.data.issues;
+
+                console.log("result: ", result)
+
+                if (result.length === 0) {
+                    Modal.warning({
+                        title: 'Warning',
+                        content: 'The selected issue does not have any associated sub-tasks.',
+                    });
+                }
+
+                setIsLoadingFetchingChildren(false);
+                setChildrenTasks(result);
+                setIsSubmitParentEnabled(true);
+                setIsIssueKeyParentNotFound(false);
+                setIsAddTaskEnabled(false);
+                return result;
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Fetch aborted');
+            } else {
+                console.error('Fetch error:', error);
+            }
+
+            setIsSubmitParentEnabled(true);
+            setIsLoadingGenerateSubtasks(false);
+            setIsAddTaskEnabled(true);
+            return null;
+        }
     };
 
-    const handleCancel = () => {
-        setIsModalVisible(false);
+    const handleCancelModalFetchChildren = () => {
+        setIsModalFetchChildrenVisible(false);
     };
 
     const formatCardNumber = (value) => {
@@ -113,7 +178,9 @@ export default function Home({initialTasks}) {
 
     const addButtonRef = useRef(null);
     useEffect(() => {
-        addButtonRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (addButtonRef.current) {
+            addButtonRef.current.scrollIntoView({behavior: 'smooth'});
+        }
     }, [task]);
 
     useEffect(() => {
@@ -140,14 +207,74 @@ export default function Home({initialTasks}) {
             job_duration,
         });
 
-        if(responseCalculateWSJF?.status === 200) {
+        console.log("responseCalculateWSJF", responseCalculateWSJF)
+
+        if (responseCalculateWSJF?.status === 200) {
             setTask((prevTask) =>
                 prevTask.map((task) =>
-                    task.id === responseCalculateWSJF.data.id ? {...task, wsjf_score: responseCalculateWSJF.data.wsjf} : task
+                    task.id === responseCalculateWSJF.data.id ? {
+                        ...task,
+                        wsjf_score: responseCalculateWSJF.data.wsjf
+                    } : task
                 )
             );
         }
     };
+
+    const checkParentIssueKey = async (issueKey) => {
+        console.log("Fetching...", issueKey)
+        setIsLoadingFetchingChildren(true);
+        const controller = new AbortController();
+        setAbortFetchingChildrenController(controller);
+
+        try {
+            const response = await jiraClient.post(issueKey);
+            console.log("res: ", response)
+            if (response?.status === 200) {
+                setIsLoadingFetchingChildren(false);
+
+                if (!response.data.key) {
+                    setIsIssueKeyParentNotFound(true);
+                } else {
+                    response.data.fields.key = response.data.key;
+
+                    const result = response.data.fields;
+
+                    setIsIssueKeyParentNotFound(false);
+
+                    if (result.issuetype.id !== "10000" && result.issuetype.id !== "10001") {
+                        setIsCheckingParentIsError(true);
+                    } else {
+                        setIsCheckingParentIsError(false);
+                        setParentDetail(result);
+                        setIsSubmitParentEnabled(true);
+                    }
+
+                    return result;
+                }
+            }
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('Fetch aborted');
+            } else {
+                console.error('Fetch error:', error);
+            }
+
+            setIsLoadingFetchingChildren(false);
+            setParentDetail(null);
+            setIsSubmitParentEnabled(false);
+            setIsLoadingFetchingChildren(false);
+            setIsCheckingParentIsError(true);
+            return null;
+        }
+    }
+
+    const handleCancelFetchingChildren = () => {
+        if (abortFetchingChildrenController) {
+            abortFetchingChildrenController.abort();
+        }
+        setIsLoadingFetchingChildren(false);
+    }
 
     const addTask = () => {
         setTask((prevTask) => [
@@ -206,11 +333,28 @@ export default function Home({initialTasks}) {
             dataIndex: 'issue_key',
             key: 'issue_key',
             align: 'center',
-            width: 200,
+            width: 150,
             render: (text, record) => (
                 <Input
                     value={text}
                     onChange={(e) => handleValueChange(e.target.value, record.id, 'issue_key')}
+                />
+            ),
+        },
+        {
+            title: (
+                <Tooltip title="Jira issue Summary">
+                    Issue Summary
+                </Tooltip>
+            ),
+            dataIndex: 'issue_summary',
+            key: 'issue_summary',
+            align: 'center',
+            width: 400,
+            render: (text, record) => (
+                <Input
+                    value={text}
+                    onChange={(e) => handleValueChange(e.target.value, record.id, 'issue_summary')}
                 />
             ),
         },
@@ -343,6 +487,7 @@ export default function Home({initialTasks}) {
             dataIndex: 'wsjf_score',
             key: 'wsjf_score',
             align: 'center',
+            sorter: (a, b) => a.wsjf_score - b.wsjf_score,
             render: (text, record) => (
                 <div style={{display: 'flex', alignItems: 'center'}}>
                     <Typography.Text
@@ -379,37 +524,106 @@ export default function Home({initialTasks}) {
                 <img src="https://icons.iconarchive.com/icons/graphicloads/flat-finance/256/calculator-icon.png"
                      style={{width: '48px', height: '48px'}} alt="App Logo"/>
                 <Title level={1}>WSJF Calculator</Title>
+
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '20px'}}>
-                    <Button type="primary" onClick={() => setIsPaymentModalVisible(true)}
-                            style={{background: 'rgb(255, 180, 0)', fontWeight: 'bolder'}}>Fetch Children</Button>
+                    <Button type="primary" onClick={showModal} className="main-button">Fetch Children</Button>
                     <div className="table-container">
-                        <Table className="cursor-pointer" columns={columns} dataSource={task.slice(0, displayedRows)} rowKey="id" pagination={false}/>
+                        <Table
+                            className="cursor-pointer"
+                            columns={columns}
+                            dataSource={mappedChildrenTasks?.length > 0 ? mappedChildrenTasks : task.slice(0, displayedRows)}
+                            rowKey="id"
+                            pagination={false}
+                        />
                     </div>
-                    <div className="button-container" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%'}}>
-                        <Button
-                            ref={addButtonRef}
-                            type="primary"
-                            icon={<PlusOutlined/>}
-                            className="add-task-button"
-                            onClick={() => {
-                                if (task.length >= 4) {
-                                    setIsPaywallVisible(true);
-                                } else {
-                                    addTask();
-                                }
-                            }}
-                            style={{background: 'rgb(255, 180, 0)', fontWeight: 'bolder'}}
-                        >
-                            Add Task
+                    <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: "10px"}}>
+                        <Button type="primary" danger icon={<ReloadOutlined />} onClick={() => window.location.reload()} className="reload-button">
                         </Button>
+                    </div>
+                    <div className="button-container"
+                         style={{}}>
+                        {isAddTaskEnabled && (
+
+                            <Button
+                                ref={addButtonRef}
+                                type="primary"
+                                icon={<PlusOutlined/>}
+                                className="main-button"
+                                onClick={() => {
+                                    if (task.length >= 10) {
+                                        setIsPaywallVisible(true);
+                                    } else {
+                                        addTask();
+                                    }
+                                }}
+                            >
+                                Add Task
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
             <Footer style={{flexShrink: '0'}}/>
-            <Modal title="Fetch Children" open={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-                <p>Some contents...</p>
-                <p>Some contents...</p>
-                <p>Some contents...</p>
+            <Modal
+                title="Fetch Children"
+                open={isModalFetchChildrenVisible}
+                onOk={handleOk}
+                onCancel={handleCancelModalFetchChildren}
+                okText={"Submit"}
+                okButtonProps={{disabled: !isSubmitParentEnabled}}
+                centered
+                style={{textAlign: 'center'}}
+            >
+                <Text type="secondary" style={{fontSize: '14px', marginBottom: '20px'}}>Enter the issue key of the Jira
+                    Epic or Story to fetch its children tasks.</Text>
+                <Form form={form}>
+                    <Form.Item
+                        label="Parent Issue Key"
+                        name={"parentIssueKey"}
+                        rules={[
+                            {required: true, message: 'Please input your Parent Issue Key!'},
+                            {
+                                pattern: /^[A-Za-z]{1,10}-\d{1,5}$/,
+                                message: 'Parent Issue Key should start with 1-10 alphabets followed by a dash and then 1-5 numbers. Example: KHO-12345'
+                            }
+                        ]}
+                    >
+                        <Input
+                            type="text"
+                            name="parentIssueKey"
+                            placeholder="KHO-394"
+                            onChange={(e) => {
+                                setParentDetail(null);
+                                setIsIssueKeyParentNotFound(false);
+                                const upperCaseValue = e.target.value.toUpperCase();
+                                form.setFieldsValue({parentIssueKey: upperCaseValue});
+                            }}
+                            suffix={
+                                <Button
+                                    type="primary"
+                                    loading={isLoadingFetchingChildren}
+                                    onClick={async () => {
+                                        const issueKey = form.getFieldValue('parentIssueKey');
+                                        await checkParentIssueKey(issueKey);
+                                    }}
+                                >
+                                    Check
+                                </Button>
+                            }
+                        />
+                    </Form.Item>
+                </Form>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px'}}>
+                    {isCheckingParentIsError && <Text type="danger">Sorry, an error was occured :(</Text>}
+                    {isIssueKeyParentNotFound && <Text type="danger">Given Issue Key not found</Text>}
+                    {parentDetail?.summary && (parentDetail.issuetype.id === "10001" ?
+                        <Story16Icon className="issue-type-icon-style"/> :
+                        <Epic16Icon className="issue-type-icon-style"/>)}
+                    {parentDetail && <Text strong style={{
+                        marginLeft: "10px",
+                        fontSize: '12px'
+                    }}>{parentDetail?.key} - {parentDetail?.summary}</Text>}
+                </div>
             </Modal>
             <Modal
                 wrapClassName="custom-modal"
@@ -419,10 +633,15 @@ export default function Home({initialTasks}) {
                 width="70%"
                 footer={null}
             >
-                <p className="modal-subtitle">Get Unlimited digital access free for one month Unlimited Digital Access</p>
-                <div className="start-free-trial-button" onClick={() => setIsPaymentModalVisible(true)}>
+                <p className="modal-subtitle">Get Unlimited digital access free for one month Unlimited Digital
+                    Access</p>
+                <Button
+                    type="primary"
+                    className="free-trial-button"
+                    onClick={() => setIsPaymentModalVisible(true)}
+                >
                     Start Your Free Trial
-                </div>
+                </Button>
                 <a className="login-link" onClick={() => setIsPaywallVisible(false)}>
                     Already a subscriber? Login
                 </a>
@@ -461,15 +680,18 @@ export default function Home({initialTasks}) {
                         label="Cardholders Name"
                         name={"card-holder-name"}
                         rules={[
-                            { required: true, message: 'Please input your cardholder name!' },
-                            { pattern: /^[A-Za-z\s]{1,40}$/, message: 'Name should only contain alphabets and spaces, max 40 characters' }
+                            {required: true, message: 'Please input your cardholder name!'},
+                            {
+                                pattern: /^[A-Za-z\s]{1,40}$/,
+                                message: 'Name should only contain alphabets and spaces, max 40 characters'
+                            }
                         ]}
                     >
-                        <Input type="text" name="card-holder-name" placeholder="Kevin Archie" />
+                        <Input type="text" name="card-holder-name" placeholder="Kevin Archie"/>
                     </Form.Item>
                     <Form.Item
                         label="Card Number"
-                        rules={[{ required: true, message: 'Please input your card number!' }]}
+                        rules={[{required: true, message: 'Please input your card number!'}]}
                     >
                         <Input
                             type="text"
@@ -488,26 +710,28 @@ export default function Home({initialTasks}) {
                             <Form.Item label="Expiry Date">
                                 <Row gutter={8}>
                                     <Col span={12}>
-                                        <Select placeholder="Select year" name="expiry-year" defaultValue={currentYear} onChange={(value) => {
-                                            setSelectedYear(value);
-                                            if (value < currentYear || (value === currentYear && selectedMonth < currentMonthIndex)) {
-                                                setIsDateValid(false);
-                                            } else {
-                                                setIsDateValid(true);
-                                            }
-                                            if (value > currentYear) {
-                                                setSelectedMonth(0);
-                                            } else {
-                                                setSelectedMonth(currentMonthIndex);
-                                            }
-                                        }}>
+                                        <Select placeholder="Select year" name="expiry-year" defaultValue={currentYear}
+                                                onChange={(value) => {
+                                                    setSelectedYear(value);
+                                                    if (value < currentYear || (value === currentYear && selectedMonth < currentMonthIndex)) {
+                                                        setIsDateValid(false);
+                                                    } else {
+                                                        setIsDateValid(true);
+                                                    }
+                                                    if (value > currentYear) {
+                                                        setSelectedMonth(0);
+                                                    } else {
+                                                        setSelectedMonth(currentMonthIndex);
+                                                    }
+                                                }}>
                                             {years.map((year, index) => (
                                                 <Option key={index} value={year}>{year}</Option>
                                             ))}
                                         </Select>
                                     </Col>
                                     <Col span={12}>
-                                        <Select placeholder="Select month" name="expiry-month" defaultValue={currentMonth} onChange={(value) => {
+                                        <Select placeholder="Select month" name="expiry-month"
+                                                defaultValue={currentMonth} onChange={(value) => {
                                             const selectedMonthIndex = months.indexOf(value);
                                             setSelectedMonth(selectedMonthIndex);
                                             if (selectedYear === currentYear && selectedMonthIndex < currentMonthIndex) {
@@ -530,11 +754,11 @@ export default function Home({initialTasks}) {
                                 label="CVV"
                                 name={"cvv"}
                                 rules={[
-                                    { required: true, message: 'Please input your CVV!' },
-                                    { pattern: /^\d{3}$/, message: 'CVV should be exactly 3 digits' }
+                                    {required: true, message: 'Please input your CVV!'},
+                                    {pattern: /^\d{3}$/, message: 'CVV should be exactly 3 digits'}
                                 ]}
                             >
-                                <Input type="text" name="cvv" placeholder="099" />
+                                <Input type="text" name="cvv" placeholder="099"/>
                             </Form.Item>
                         </Col>
                     </Row>

@@ -8,7 +8,7 @@ const Footer = () => {
             position: 'relative',
             bottom: '0',
             width: '100%',
-            background: 'rgb(255, 180, 0)', // Adjusted color to a bit orange
+            background: 'rgba(255,198,82,255)', // Adjusted color to a bit orange
             color: '#FFFFFF', // White color for the text
             padding: '20px',
             textAlign: 'center',
