@@ -1,6 +1,3 @@
-// Components
-
-
 // Global CSS
 import "../styles/globals.css"
 
