@@ -1077,6 +1077,7 @@ export default function Home({ initialTasks }) {
           </div>
         </WavyBackground>
       </div>
+      <Footer style={{flexShrink: '0'}}/>
     </div>
   );
 }
