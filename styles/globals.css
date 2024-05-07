@@ -1,6 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.cdnfonts.com/css/futura-ts-new');
+@import url('https://fonts.cdnfonts.com/css/all-disney');
+@import url('https://fonts.cdnfonts.com/css/bauhausc');
+@import url('https://fonts.cdnfonts.com/css/hussar-tani');
+@import url('https://fonts.cdnfonts.com/css/neo-sans-std-tr');
 
 :root {
   --main-background-gradient: #f2f2f2;
@@ -21,6 +26,19 @@ body {
   Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   background-image: var(--main-background-gradient);
   color: #222222;
+}
+
+.top-title {
+  /*font-family: 'New Walt Disney UI', sans-serif;*/
+  font-family: 'BauhausC', sans-serif;
+  color: #00AA5B;
+}
+
+.calculator-title {
+  /*font-family: 'Hussar Tani', sans-serif;*/
+  font-family: 'Neo Sans Std TR', sans-serif;
+  color: rgba(249, 246, 238);
+  font-size: 60px;
 }
 
 a {
@@ -181,4 +199,10 @@ h2 {
 .reload-button:hover {
   fontWeight: 'bolder';
   background-color: rgba(255, 0, 0, 0.7) !important;
+}
+
+.cursorSize {
+  font-size: 50px; /*Setting this to a ridiculous size as an example*/
+  color: #EAB308;
+  font-style: italic;
 }

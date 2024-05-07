@@ -32,6 +32,7 @@ import Epic16Icon from "@atlaskit/icon-object/glyph/epic/16";
 import Story16Icon from "@atlaskit/icon-object/glyph/story/16";
 import { HeadingLamp } from "../components/ui/HeadingLamp";
 import { WavyBackground } from "../components/ui/HeadingGemini";
+import Head from "next/head";
 
 const { Text, Title } = Typography;
 //
@@ -632,10 +633,18 @@ export default function Home({ initialTasks }) {
   console.log("TASK: ", task);
 
   return (
-    <div>
-      <HeadingLamp />
-      <div className="relative">
-        <WavyBackground>
+      <>
+        <Head>
+          <link href="https://fonts.cdnfonts.com/css/futura-ts-new" rel="stylesheet"/>
+          <link href="https://fonts.cdnfonts.com/css/all-disney" rel="stylesheet"/>
+          <link href="https://fonts.cdnfonts.com/css/bauhausc" rel="stylesheet"/>
+          <link href="https://fonts.cdnfonts.com/css/hussar-tani" rel="stylesheet"/>
+          <link href="https://fonts.cdnfonts.com/css/neo-sans-std-tr" rel="stylesheet"/>
+        </Head>
+        <div>
+          <HeadingLamp/>
+          <div className="relative">
+            <WavyBackground>
           <div
             className="centered-content"
             // style={{
@@ -644,13 +653,19 @@ export default function Home({ initialTasks }) {
             //   minHeight: "100vh",
             // }}
           >
-            <img
-              src="https://icons.iconarchive.com/icons/graphicloads/flat-finance/256/calculator-icon.png"
-              style={{ width: "48px", height: "48px" }}
-              alt="App Logo"
-            />
+            {/*<img*/}
+            {/*  src="/glowing-cal.png"*/}
+            {/*  style={{ width: "48px", height: "48px" }}*/}
+            {/*  alt="App Logo"*/}
+            {/*/>*/}
             <Title level={1}>
-              <span className="text-white">WSJF Calculator</span>
+              <div className="calculator-title flex items-end justify-center">
+                GO<img
+                  src="/gojek-no-bg.png"
+                  style={{ width: "56px", height: "80px", paddingBottom: "10px", marginRight: "10px"}}
+                  alt="App Logo"
+                />JF
+              </div>
             </Title>
 
             <div
@@ -1079,5 +1094,6 @@ export default function Home({ initialTasks }) {
       </div>
       <Footer style={{flexShrink: '0'}}/>
     </div>
+        </>
   );
 }
