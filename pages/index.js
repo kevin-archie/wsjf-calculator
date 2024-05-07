@@ -635,6 +635,7 @@ export default function Home({ initialTasks }) {
   return (
       <>
         <Head>
+          <title>GO-JF</title>
           <link href="https://fonts.cdnfonts.com/css/futura-ts-new" rel="stylesheet"/>
           <link href="https://fonts.cdnfonts.com/css/all-disney" rel="stylesheet"/>
           <link href="https://fonts.cdnfonts.com/css/bauhausc" rel="stylesheet"/>
