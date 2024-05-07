@@ -60,9 +60,23 @@ function getChildren(issueKey) {
     return httpRequest(url, payload);
 }
 
+function updateTask(issueKey, wsjf_score) {
+    const url = process.env.JIRA_URL;
+    const payload = {
+        params: {
+            method: "put",
+            resource: "issue",
+            issueKey: issueKey,
+            score: wsjf_score,
+        }
+    }
+    return httpRequest(url, payload);
+}
+
 const jiraClient = {
     post,
-    getChildren
+    getChildren,
+    updateTask,
 };
 
 export default jiraClient;

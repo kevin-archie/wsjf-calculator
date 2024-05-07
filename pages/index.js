@@ -1,6 +1,15 @@
 import React, {useState, useEffect, useRef} from "react";
-import {Button, Input, Table, Typography, Tooltip, Modal, Form, Row, Col, Select} from "antd";
-import {PlusOutlined, MinusOutlined, DeleteOutlined, ReloadOutlined} from "@ant-design/icons";
+import {Button, Input, Table, Typography, Tooltip, Modal, Form, Row, Col, Select, Spin} from "antd";
+import {
+    PlusOutlined,
+    MinusOutlined,
+    DeleteOutlined,
+    ReloadOutlined,
+    SyncOutlined,
+    FireOutlined,
+    CheckCircleOutlined,
+    LoadingOutlined,
+} from "@ant-design/icons";
 import {v4 as uuidv4} from "uuid";
 import {faker} from '@faker-js/faker';
 import post from "./api/calculator";
@@ -62,11 +71,13 @@ export default function Home({initialTasks}) {
     const [isLoadingFetchingChildren, setIsLoadingFetchingChildren] = useState(false);
     const [isLoadingGenerateSubtasks, setIsLoadingGenerateSubtasks] = useState(false);
     const [parentDetail, setParentDetail] = useState(null);
-    const [childrenTasks, setChildrenTasks] = useState(null);
     const [abortFetchingChildrenController, setAbortFetchingChildrenController] = useState(null);
     const [isIssueKeyParentNotFound, setIsIssueKeyParentNotFound] = useState(false);
     const [isCheckingParentIsError, setIsCheckingParentIsError] = useState(false);
-
+    const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
+    const [isShowReloadButton, setIsShowReloadButton] = useState(true);
+    const [isRemoveErrorMessage, setIsRemoveErrorMessage] = useState(false);
+    const [isLoadingSubmitJira, setIsLoadingSubmitJira] = useState(false);
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const years = Array.from({length: 5}, (_, i) => new Date().getFullYear() + i);
@@ -75,7 +86,6 @@ export default function Home({initialTasks}) {
     const availableMonths = months.slice(selectedMonth);
     const [currentMonthIndex, setCurrentMonthIndex] = useState(new Date().getMonth());
 
-    const [displayedRows, setDisplayedRows] = useState(10);
     const [isPaywallVisible, setIsPaywallVisible] = useState(false);
 
     const [isModalFetchChildrenVisible, setIsModalFetchChildrenVisible] = useState(false);
@@ -86,20 +96,8 @@ export default function Home({initialTasks}) {
         setIsModalFetchChildrenVisible(true);
     };
 
-    const mappedChildrenTasks = childrenTasks?.map((task) => ({
-        id: uuidv4(),
-        issue_key: task.key,
-        issue_summary: task.fields.summary,
-        business_value: null,
-        time_criticality: null,
-        risk_opportunity: null,
-        job_duration: null,
-    }));
-
     const handleOk = async () => {
         const issueKey = form.getFieldValue('parentIssueKey');
-
-        console.log("Fetching Childrens of: ", issueKey)
 
         setIsModalFetchChildrenVisible(false);
         setIsLoadingGenerateSubtasks(true);
@@ -119,7 +117,17 @@ export default function Home({initialTasks}) {
                 }
 
                 setIsLoadingFetchingChildren(false);
-                setChildrenTasks(result);
+                const mappedChildrenTasks = result.map((task) => ({
+                    id: uuidv4(),
+                    issue_key: task.key,
+                    issue_summary: task.fields.summary,
+                    business_value: null,
+                    time_criticality: null,
+                    risk_opportunity: null,
+                    job_duration: null,
+                }));
+
+                setTask(mappedChildrenTasks)
                 setIsSubmitParentEnabled(true);
                 setIsIssueKeyParentNotFound(false);
                 setIsAddTaskEnabled(false);
@@ -190,6 +198,13 @@ export default function Home({initialTasks}) {
         }
     }, [isPaywallVisible]);
 
+    useEffect(() => {
+        const areAllFieldsFilled = task.every((taskItem) => {
+            return taskItem.issue_key && taskItem.issue_summary && taskItem.business_value && taskItem.time_criticality && taskItem.risk_opportunity && taskItem.job_duration;
+        });
+        setIsSubmitButtonDisabled(!areAllFieldsFilled);
+    }, [task]);
+
     const calculateWSJF = async (row) => {
         const {
             issue_key,
@@ -231,6 +246,7 @@ export default function Home({initialTasks}) {
             const response = await jiraClient.post(issueKey);
             console.log("res: ", response)
             if (response?.status === 200) {
+
                 setIsLoadingFetchingChildren(false);
 
                 if (!response.data.key) {
@@ -269,6 +285,10 @@ export default function Home({initialTasks}) {
         }
     }
 
+    const updateTask = async (issueKey, wsjf_score) => {
+        const response = await jiraClient.updateTask(issueKey, wsjf_score)
+    }
+
     const handleCancelFetchingChildren = () => {
         if (abortFetchingChildrenController) {
             abortFetchingChildrenController.abort();
@@ -282,6 +302,13 @@ export default function Home({initialTasks}) {
             {id: uuidv4(), issue_key: '', business_value: null, risk_opportunity: null, job_duration: null},
         ]);
     };
+
+    useEffect(() => {
+        if (task.length === 0) {
+            setIsAddTaskEnabled(true);
+            // setIsShowReloadButton(false);
+        }
+    }, [task]);
 
     const removeTask = (id) => {
         setTask((prevTask) =>
@@ -518,6 +545,8 @@ export default function Home({initialTasks}) {
         }
     ];
 
+    console.log("TASK: ", task)
+
     return (
         <div className="centered-content" style={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
             <div style={{marginTop: '40px', flex: '1 0 auto', textAlign: 'center'}}>
@@ -526,24 +555,33 @@ export default function Home({initialTasks}) {
                 <Title level={1}>WSJF Calculator</Title>
 
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '20px'}}>
-                    <Button type="primary" onClick={showModal} className="main-button">Fetch Children</Button>
+                    <Button type="primary" onClick={showModal} className="main-button" icon={<SyncOutlined/>}>Fetch
+                        Children</Button>
                     <div className="table-container">
                         <Table
                             className="cursor-pointer"
                             columns={columns}
-                            dataSource={mappedChildrenTasks?.length > 0 ? mappedChildrenTasks : task.slice(0, displayedRows)}
+                            dataSource={task}
                             rowKey="id"
                             pagination={false}
                         />
                     </div>
                     <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: "10px"}}>
-                        <Button type="primary" danger icon={<ReloadOutlined />} onClick={() => window.location.reload()} className="reload-button">
-                        </Button>
+                        {isShowReloadButton && (
+                            <Button type="primary" danger icon={<ReloadOutlined/>}
+                                    onClick={() => window.location.reload()} className="reload-button">
+                            </Button>
+                        )}
                     </div>
+                    <Spin
+                        spinning={isLoadingSubmitJira}
+                        size={"large"}
+                        indicator={<LoadingOutlined style={{fontSize: 24}} spin/>}
+                    >
+                    </Spin>
                     <div className="button-container"
                          style={{}}>
-                        {isAddTaskEnabled && (
-
+                        {isAddTaskEnabled ? (
                             <Button
                                 ref={addButtonRef}
                                 type="primary"
@@ -559,6 +597,24 @@ export default function Home({initialTasks}) {
                             >
                                 Add Task
                             </Button>
+                        ) : (
+                            <Button
+                                type="primary"
+                                className="main-button"
+                                icon={<FireOutlined />}
+                                onClick={async () => {
+                                    setIsLoadingSubmitJira(true);
+                                    task.forEach((taskItem) => {
+                                        if (taskItem.issue_key) {
+                                            updateTask(taskItem.issue_key, taskItem.wsjf_score);
+                                        }
+                                    });
+                                    setIsLoadingSubmitJira(false);
+                                }}
+                                disabled={isSubmitButtonDisabled}
+                            >
+                                Submit
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -569,7 +625,8 @@ export default function Home({initialTasks}) {
                 open={isModalFetchChildrenVisible}
                 onOk={handleOk}
                 onCancel={handleCancelModalFetchChildren}
-                okText={"Submit"}
+                cancelText={"Abort"}
+                okText={"Fetch"}
                 okButtonProps={{disabled: !isSubmitParentEnabled}}
                 centered
                 style={{textAlign: 'center'}}
@@ -595,35 +652,41 @@ export default function Home({initialTasks}) {
                             onChange={(e) => {
                                 setParentDetail(null);
                                 setIsIssueKeyParentNotFound(false);
+                                setIsRemoveErrorMessage(true);
+                                setIsSubmitParentEnabled(false)
                                 const upperCaseValue = e.target.value.toUpperCase();
                                 form.setFieldsValue({parentIssueKey: upperCaseValue});
                             }}
-                            suffix={
+                            suffix= {parentDetail?.summary && !isIssueKeyParentNotFound && !isCheckingParentIsError ? (
+                                <CheckCircleOutlined style={{ color: 'green' }} />
+                            ) : (
                                 <Button
                                     type="primary"
                                     loading={isLoadingFetchingChildren}
                                     onClick={async () => {
+                                        setIsRemoveErrorMessage(false);
                                         const issueKey = form.getFieldValue('parentIssueKey');
                                         await checkParentIssueKey(issueKey);
                                     }}
                                 >
                                     Check
                                 </Button>
-                            }
+                            )}
                         />
                     </Form.Item>
                 </Form>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px'}}>
-                    {isCheckingParentIsError && <Text type="danger">Sorry, an error was occured :(</Text>}
-                    {isIssueKeyParentNotFound && <Text type="danger">Given Issue Key not found</Text>}
-                    {parentDetail?.summary && (parentDetail.issuetype.id === "10001" ?
-                        <Story16Icon className="issue-type-icon-style"/> :
-                        <Epic16Icon className="issue-type-icon-style"/>)}
-                    {parentDetail && <Text strong style={{
-                        marginLeft: "10px",
-                        fontSize: '12px'
-                    }}>{parentDetail?.key} - {parentDetail?.summary}</Text>}
-                </div>
+                {!isRemoveErrorMessage &&
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px'}}>
+                        {isCheckingParentIsError && <Text type="danger">Issue type should be a Epic or Story</Text>}
+                        {isIssueKeyParentNotFound && <Text type="danger">Given Issue Key not found</Text>}
+                        {parentDetail?.summary && (parentDetail.issuetype.id === "10001" ?
+                            <Story16Icon className="issue-type-icon-style"/> :
+                            <Epic16Icon className="issue-type-icon-style"/>)}
+                        {parentDetail && <Text strong style={{
+                            marginLeft: "10px",
+                            fontSize: '12px'
+                        }}>{parentDetail?.key}: {parentDetail?.summary}</Text>}
+                    </div>}
             </Modal>
             <Modal
                 wrapClassName="custom-modal"
@@ -651,8 +714,8 @@ export default function Home({initialTasks}) {
                 title={<div className="modal-title">Payment Information</div>}
                 open={isPaymentModalVisible}
                 onCancel={() => {
-                    setIsPaymentModalVisible(false);
                     form.resetFields();
+                    setIsPaymentModalVisible(false);
                 }}
                 width="70%"
                 footer={null}
@@ -763,7 +826,7 @@ export default function Home({initialTasks}) {
                         </Col>
                     </Row>
                     <Form.Item>
-                        <Button type="primary" onClick={() => form.submit()}>
+                        <Button type="primary" onClick={() => form.submit()} disabled={isSubmitParentEnabled}>
                             {isSubmitting ? 'Processing...' : 'Submit'}
                         </Button>
                     </Form.Item>
