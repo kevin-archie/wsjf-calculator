@@ -72,11 +72,14 @@ h2 {
 .main-button {
   fontWeight: 'bolder';
   background-color: rgba(255,198,82,255);
+  color: white; /* Default font color is white */
 }
 
 .main-button:hover {
   fontWeight: 'bolder';
   background-color: rgba(255,198,82, 0.7) !important;
+  color: white !important; /* Keep font color white on hover */
+  border-color: rgba(255, 198, 82, 0.7) !important; /* Ensure border stays yellow on hover */
 }
 
 .center-button {
@@ -90,12 +93,20 @@ h2 {
 }
 
 .button-container {
-  margin-top: 20px;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; /* Centers content horizontally */
+  align-items: center; /* Centers content vertically (optional if needed) */
   width: 100%;
 }
+
+.button-container > div {
+  margin-right: 10px; /* Adds space between the buttons */
+}
+
+.button-container > div:last-child {
+  margin-right: 0; /* Removes margin from the last button */
+}
+
 
 .cursor-pointer {
   cursor: pointer;
